@@ -5,6 +5,7 @@
 # BaseHTTPRequestHandler
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
+import json
 
 class HTTPReqHandler(BaseHTTPRequestHandler):
 
@@ -19,12 +20,11 @@ class HTTPReqHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         response = BytesIO()
-        response.write(b'This is POST request. ')
-        response.write(b'Received: ')
         response.write(body)
 
         # TODO
-        print(bytes.decode(response.getvalue()))
+        data = json.loads(response.getvalue())
+        print(data)
 
         self.wfile.write(response.getvalue())
 
