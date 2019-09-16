@@ -61,7 +61,7 @@ class HTTPReqHandler(BaseHTTPRequestHandler):
                 for i, (country, event) in enumerate(zip(countries, events)):
                     if country and event not in sett_dic:
                         print('POST one original event...')
-                        print(i, country, event)
+                        print(i, country, event, countries, events)
                         orig_data = json.loads(response.getvalue())
                         # TODO... Where can I find the domain for POST request?
                         response = requests.post(f'http://domain.{country}/sg_event', data=orig_data[i])
