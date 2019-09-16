@@ -22,6 +22,10 @@ class HTTPReqHandler(BaseHTTPRequestHandler):
         response.write(b'This is POST request. ')
         response.write(b'Received: ')
         response.write(body)
+
+        # TODO
+        print(bytes.decode(response.getvalue()))
+
         self.wfile.write(response.getvalue())
 
 def run(server_class=HTTPServer, handler_class=HTTPReqHandler):
