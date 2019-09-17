@@ -27,22 +27,15 @@ class HTTPReqHandler(BaseHTTPRequestHandler):
 
         # Task
         data = json.loads(response.getvalue())
-        events = []
-        countries = []
+        zeroes = [0 for i in range(len(data))]
 
         # 1. Prefixes sg_ removing
-        for dic in data:
+        for i, dic in enumerate(data):
             for d in dic:
                 if d.startswith('sg_'):
                     dic[d[3:]] = dic.pop(d)
-                if d == 'event':
-                    events.append(dic.get(d))
-                else:
-                    events.append(None)
                 if d == 'country':
-                    countries.append(dic.get(d))
-                else:
-                    countries.append(None)
+                    zeroes[i] = 1
 
         # 2. Predefined fields removing
         for dic in data:
@@ -52,24 +45,29 @@ class HTTPReqHandler(BaseHTTPRequestHandler):
         # 3. MongoDB saving TODO...
 
         # 4. country and event
-        if any(countries):
+        if any(zeroes):
             sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
             sett_response = sg.client._('/user/webhooks/event/settings').get()
             if sett_response.status_code >= 200 and sett_response.status_code < 300:
                 sett_dic = json.loads(sett_response.body)
                 sett_dic.pop('url', None)
-                for i, (country, event) in enumerate(zip(countries, events)):
-                    if country and event not in sett_dic:
-                        print('POST one original event...')
-                        print(i, country, event, countries, events)
-                        print(data)
-                        orig_data = json.loads(response.getvalue())
-                        # TODO... Where can I find the domain for POST request?
-                        response = requests.post(f'http://domain.{country}/sg_event', data=orig_data[i])
-                    else:
-                        print('No custom field: "country"' if not country else country, 
-                              'Predefined "event"' if event in sett_dic else event, 
-                              'No POST request sent.', sep=os.linesep)
+                for z in zeroes:
+                    if z:
+                        with_country = data[z]
+                        country = with_country.get('country')
+                        event = with_country.get('event')
+
+                        if event not in sett_dic:
+                            print('POST one original event...')
+                            print(country, event)
+                            print(data)
+                            orig_data = json.loads(response.getvalue())
+                            # TODO... Where can I find the domain for POST request?
+                            response = requests.post(f'http://domain.{country}/sg_event', data=orig_data[z])
+                        else:
+                            print('No custom field: "country"' if not country else country, 
+                                  'Predefined "event"' if event in sett_dic else event, 
+                                  'No POST request sent.', sep=os.linesep)
             else:
                 print('Non 200 response, sorry.')
         else:
